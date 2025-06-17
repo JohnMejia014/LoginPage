@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Google from 'expo-auth-session/providers/google';
+import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
-
 import React from 'react';
 import {
     Alert,
@@ -14,7 +14,15 @@ import {
     TextInput,
     View,
 } from 'react-native';
+import { saveUserToFirestore } from '../firebase/firebase';
+const {
+    GOOGLE_WEB_CLIENT_ID,
+    ANDROID_CLIENT_ID,
+    IOS_CLIENT_ID,
+} = Constants.expoConfig?.extra || {};
+    
 
+  
 WebBrowser.maybeCompleteAuthSession();
 
 export default function Login(){
@@ -22,11 +30,10 @@ export default function Login(){
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: "625140642199-0b7r6dbn726jamunbjj4ap1ssmajkeu2.apps.googleusercontent.com",
-    iosClientId: "625140642199-1c2f913ielsuaeur2b16589q9ca8goeb.apps.googleusercontent.com",
-    webClientId: "625140642199-u0uq2jd95gm448burtu49ek1jkt78f5d.apps.googleusercontent.com",
-  })
-
+    androidClientId: ANDROID_CLIENT_ID,
+    iosClientId: IOS_CLIENT_ID,
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+  });
   async function handleGoogleSignIn() {
     const user = await AsyncStorage.getItem("@user");
     if (!user){
@@ -43,19 +50,32 @@ export default function Login(){
   }, [response])
 
   const getUserInfo = async (token) => {
-    if (!token)return;
-    try{
-      const response = await fetch("https://www.googleapis.com/userinfo/v2/me",
-      {headers: {Authorization: `Bearer ${token}`},}
-      );
+    if (!token) return;
+    try {
+      const response = await fetch("https://www.googleapis.com/userinfo/v2/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const user = await response.json();
-      console.log('Google User Info:', user); // ✅ LOG USER INFO
+      console.log('Google User Info:', user);
+  
+      // Save to AsyncStorage & state
       await AsyncStorage.setItem("@user", JSON.stringify(user));
       setUserInfo(user);
-    } catch(error){
-      // comment here
+  
+      // Save user to Firestore with unique id and provider
+      await saveUserToFirestore({
+        id: user.id,           // unique Google user ID
+        name: user.name,
+        email: user.email,
+        provider: 'google',    // indicate provider
+      });
+  
+    } catch (error) {
+      console.log("Google fetch user error", error);
     }
   };
+  
+  
   const handlenothing = async () => {
     console.log('nothing')
   }
@@ -70,15 +90,23 @@ export default function Login(){
       });
   
       let storedUser = await AsyncStorage.getItem('@user');
+      let prevUser = JSON.parse(storedUser || '{}');
+  
       let user = {
-        name: credential.fullName?.givenName ?? JSON.parse(storedUser || '{}').name,
-        email: credential.email ?? JSON.parse(storedUser || '{}').email,
+        id: credential.user,  // unique Apple user ID
+        name: credential.fullName?.givenName ?? prevUser.name ?? '',
+        email: credential.email ?? prevUser.email ?? '',
+        provider: 'apple',    // indicate provider
       };
-      console.log('Apple Credential:', credential); // ✅ RAW APPLE CREDENTIAL
-      console.log('Apple User Info:', user);        // ✅ FINAL USER INFO
-      
+  
+      console.log('Apple Credential:', credential);
+      console.log('Apple User Info:', user);
+  
       await AsyncStorage.setItem('@user', JSON.stringify(user));
       setUserInfo(user);
+  
+      // Save user to Firestore with unique id and provider
+      await saveUserToFirestore(user);
   
     } catch (e) {
       console.log('Apple Sign-In Error:', e);
@@ -87,6 +115,8 @@ export default function Login(){
       }
     }
   };
+  
+  
   
 
 return (
