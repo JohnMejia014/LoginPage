@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Google from 'expo-auth-session/providers/google';
+import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
 import React from 'react';
 import {
@@ -13,8 +14,15 @@ import {
     TextInput,
     View,
 } from 'react-native';
-import { saveUserToFirestore } from './firebase/firebase';
+import { saveUserToFirestore } from '../firebase/firebase';
+const {
+    GOOGLE_WEB_CLIENT_ID,
+    ANDROID_CLIENT_ID,
+    IOS_CLIENT_ID,
+} = Constants.expoConfig?.extra || {};
+    
 
+  
 WebBrowser.maybeCompleteAuthSession();
 
 export default function Login(){
@@ -22,11 +30,10 @@ export default function Login(){
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: "625140642199-0b7r6dbn726jamunbjj4ap1ssmajkeu2.apps.googleusercontent.com",
-    iosClientId: "625140642199-1c2f913ielsuaeur2b16589q9ca8goeb.apps.googleusercontent.com",
-    webClientId: "625140642199-u0uq2jd95gm448burtu49ek1jkt78f5d.apps.googleusercontent.com",
-  })
-
+    androidClientId: ANDROID_CLIENT_ID,
+    iosClientId: IOS_CLIENT_ID,
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+  });
   async function handleGoogleSignIn() {
     const user = await AsyncStorage.getItem("@user");
     if (!user){
