@@ -7,12 +7,12 @@ export default () => ({
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
-    scheme: "loginapple",
+    scheme: "login-apple",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.new-login.dev",
+      bundleIdentifier: "org.name.loginapple",
       usesAppleSignIn: true,
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
@@ -24,6 +24,7 @@ export default () => ({
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
+      package: "com.newlogin.dev"
     },
     web: {
       bundler: "metro",
