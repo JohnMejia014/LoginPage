@@ -2,7 +2,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { initializeApp } from 'firebase/app';
-import { GoogleAuthProvider, createUserWithEmailAndPassword, getReactNativePersistence, initializeAuth, onAuthStateChanged, signInWithCredential, signInWithEmailAndPassword } from 'firebase/auth';
+import { GoogleAuthProvider, OAuthProvider, createUserWithEmailAndPassword, getReactNativePersistence, initializeAuth, onAuthStateChanged, signInWithCredential, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getFirestore, setDoc } from 'firebase/firestore';
 const {
   FIREBASE_API_KEY,
@@ -20,7 +20,7 @@ const firebaseConfig = {
   projectId: FIREBASE_PROJECT_ID,
   storageBucket: FIREBASE_STORAGE_BUCKET,
   messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
-  appId: FIREBASE_APP_ID,
+  appId: "1:527626776810:ios:e9c9fd32cb27aaff51a793",
 };
 console.log(firebaseConfig);
   
@@ -30,6 +30,7 @@ const db = getFirestore(app);
 const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage),
 });
+
 // Save user to Firestore
 const saveUserToFirestore = async (user) => {
   try {
@@ -51,5 +52,5 @@ const saveUserToFirestore = async (user) => {
 };
 
   
-  export { GoogleAuthProvider, auth, createUserWithEmailAndPassword, db, onAuthStateChanged, saveUserToFirestore, signInWithCredential, signInWithEmailAndPassword };
+  export { GoogleAuthProvider, OAuthProvider, auth, createUserWithEmailAndPassword, db, onAuthStateChanged, saveUserToFirestore, signInWithCredential, signInWithEmailAndPassword };
 

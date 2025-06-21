@@ -1,10 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as AuthSession from 'expo-auth-session';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Google from 'expo-auth-session/providers/google';
 import Constants from 'expo-constants';
+import * as WebBrowser from 'expo-web-browser';
 import React from 'react';
-import { Alert, Button, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { GoogleAuthProvider, auth, createUserWithEmailAndPassword, saveUserToFirestore, signInWithCredential, signInWithEmailAndPassword } from '../firebase/firebase.client';
+import { Alert, Button, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { GoogleAuthProvider, OAuthProvider, auth, createUserWithEmailAndPassword, saveUserToFirestore, signInWithCredential, signInWithEmailAndPassword } from '../firebase/firebase.client';
 const {
   GOOGLE_WEB_CLIENT_ID,
   ANDROID_CLIENT_ID,
@@ -12,6 +13,7 @@ const {
 } = Constants.expoConfig?.extra || {};
 
   
+WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
   const [userInfo, setUserInfo] = React.useState(null);
@@ -20,27 +22,46 @@ export default function Login() {
   console.log(IOS_CLIENT_ID);
 
   
-  const redirectUri = AuthSession.makeRedirectUri({
-    scheme: 'login-apple',  // from your app.config.js
-    useProxy: false,         // because you’re using iosClientId
-  });
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     iosClientId: IOS_CLIENT_ID,
-    redirectUri,
+    webClientId: GOOGLE_WEB_CLIENT_ID
   });
   
-  
-  console.log("🚨 Redirect URI being used:", redirectUri);
-  
+    
   
   React.useEffect(() => {
-    if(response?.type == 'success'){
-      const {id_token} = response.params;
-      const credential = GoogleAuthProvider.credential(id_token);
-      signInWithCredential(auth, credential);
-    }
-  }, [response])
+    const handleGoogleSignIn = async () => {
+      if (response?.type === 'success') {
+        const { id_token } = response.params;
+        const credential = GoogleAuthProvider.credential(id_token);
+        
+        try {
+          const userCredential = await signInWithCredential(auth, credential);
+          const user = userCredential.user;
+  
+          // Save to Firestore
+          await saveUserToFirestore({
+            uid: user.uid,
+            email: user.email,
+            name: user.displayName || '',
+            provider: 'google',
+          });
+  
+          const userInfo = { uid: user.uid, email: user.email, name: user.displayName };
+          await AsyncStorage.setItem('@user', JSON.stringify(userInfo));
+          setUserInfo(userInfo);
+  
+        } catch (error) {
+          console.error('Google sign-in error:', error);
+          Alert.alert('Google Sign-In Failed', error.message);
+        }
+      }
+    };
+  
+    handleGoogleSignIn();
+  }, [response]);
+  
 
   const handleRegister = async () => {
     try {
@@ -89,6 +110,76 @@ export default function Login() {
       Alert.alert('Login failed', error.message);
     }
   };
+
+  const handleAppleSignIn = async () => {
+    try {
+      console.log('🚀 Starting Apple Sign-In flow');
+  
+      let credential;  // declare here for scope
+  
+      try {
+        credential = await AppleAuthentication.signInAsync({
+          requestedScopes: [
+            AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+            AppleAuthentication.AppleAuthenticationScope.EMAIL,
+          ],
+        });
+        console.log('✅ Apple Sign-In credential received:', credential);
+      } catch (err) {
+        console.error('AppleAuthentication.signInAsync failed:', err);
+        Alert.alert('Apple Sign-In Error', err.message || 'Unknown error');
+        return; // stop further processing
+      }
+  
+      if (!credential.identityToken) {
+        console.warn('⚠️ No identity token returned from Apple');
+        throw new Error('Apple Sign-In failed: No identity token returned');
+      }
+  
+      console.log('🔐 Creating Firebase OAuthProvider credential');
+      const provider = new OAuthProvider('apple.com');
+      const firebaseCredential = provider.credential({
+        idToken: credential.identityToken,
+      });
+  
+      console.log('🔑 Signing in to Firebase with Apple credential');
+      const userCredential = await signInWithCredential(auth, firebaseCredential);
+      const firebaseUser = userCredential.user;
+  
+      console.log('👤 Firebase user signed in:', {
+        uid: firebaseUser.uid,
+        displayName: firebaseUser.displayName,
+        email: firebaseUser.email,
+      });
+  
+      const user = {
+        uid: firebaseUser.uid,
+        name: credential.fullName?.givenName ?? firebaseUser.displayName ?? '',
+        email: credential.email ?? firebaseUser.email ?? '',
+        provider: 'apple',
+      };
+  
+      console.log('💾 Saving user to Firestore and AsyncStorage:', user);
+      await saveUserToFirestore(user);
+      await AsyncStorage.setItem('@user', JSON.stringify(user));
+  
+      setUserInfo(user);
+  
+      console.log('✅ Apple Sign-In Success:', user);
+  
+    } catch (e: any) {
+      console.error('❌ Apple Sign-In Error:', e);
+      if (e.code === 'ERR_CANCELED') {
+        console.warn('🛑 User canceled Apple Sign-In');
+      } else {
+        Alert.alert('Apple Sign-In failed', e.message);
+      }
+    }
+  };
+  
+  
+
+
   return (
       <View style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.container}>
@@ -129,6 +220,17 @@ export default function Login() {
                   disabled={!request}
                 />
               </View>
+              {Platform.OS === 'ios' && (
+          <View style={styles.button}>
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={5}
+              style={{ width: 250, height: 44 }}
+              onPress={handleAppleSignIn}
+            />
+          </View>
+        )}
               </View>
             </>
           )}
