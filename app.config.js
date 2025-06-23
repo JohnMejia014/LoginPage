@@ -12,11 +12,12 @@ export default () => ({
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "org.name.loginapple",
-      usesAppleSignIn: true,
+      googleServicesFile: "./GoogleService-Info.plist",  // 👈 This line is key
       infoPlist: {
-        ITSAppUsesNonExemptEncryption: false,
+        "ITSAppUsesNonExemptEncryption": false
       },
+      bundleIdentifier: "com.login-example.dev",
+      usesAppleSignIn: true
     },
     android: {
       adaptiveIcon: {
@@ -24,7 +25,7 @@ export default () => ({
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
-      package: "com.newlogin.dev"
+      package: "org.name.loginapp"
     },
     web: {
       bundler: "metro",
@@ -57,7 +58,8 @@ export default () => ({
       FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
       FIREBASE_STORAGE_BUCKET: process.env.FIREBASE_STORAGE_BUCKET,
       FIREBASE_MESSAGING_SENDER_ID: process.env.FIREBASE_MESSAGING_SENDER_ID,
-      FIREBASE_APP_ID: process.env.FIREBASE_APP_ID,
+      FIREBASE_WEB_APP_ID: process.env.FIREBASE_WEB_APP_ID,
+      FIREBASE_IOS_APP_ID: process.env.FIREBASE_IOS_APP_ID,
 
       router: {},
       eas: {

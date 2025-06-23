@@ -3,21 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>527626776810-arbud098jddjsvrf305ggjlqdrcl7kph.apps.googleusercontent.com</string>
+	<string>351905340243-oinmcrtb79jk6dtdrvsckpnc0o7klcau.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.527626776810-arbud098jddjsvrf305ggjlqdrcl7kph</string>
+	<string>com.googleusercontent.apps.351905340243-oinmcrtb79jk6dtdrvsckpnc0o7klcau</string>
 	<key>API_KEY</key>
-	<string>AIzaSyCSek6fcXaCOMpjorq5xrORAhKH94T80JA</string>
+	<string>AIzaSyBcn7joBJ9MGnaYbh2IBH0zzmAks7tMMc0</string>
 	<key>GCM_SENDER_ID</key>
-	<string>527626776810</string>
+	<string>351905340243</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>org.name.loginapp</string>
+	<string>com.login-example.dev</string>
 	<key>PROJECT_ID</key>
-	<string>login-a4c7b</string>
+	<string>login-example-cf97f</string>
 	<key>STORAGE_BUCKET</key>
-	<string>login-a4c7b.firebasestorage.app</string>
+	<string>login-example-cf97f.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:527626776810:ios:e9c9fd32cb27aaff51a793</string>
+	<string>1:351905340243:ios:5f1783ec851afcee3f1fa6</string>
 </dict>
 </plist>
