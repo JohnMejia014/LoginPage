@@ -2,9 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Google from 'expo-auth-session/providers/google';
 import Constants from 'expo-constants';
+import * as WebBrowser from 'expo-web-browser';
 import React from 'react';
 import { Alert, Button, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { GoogleAuthProvider, OAuthProvider, auth, createUserWithEmailAndPassword, saveUserToFirestore, signInWithCredential, signInWithEmailAndPassword } from '../firebase/firebase.client';
+import { GoogleAuthProvider, auth, createUserWithEmailAndPassword, saveUserToFirestore, signInWithCredential, signInWithEmailAndPassword } from '../firebase/firebase.client';
 const {
   GOOGLE_WEB_CLIENT_ID,
   ANDROID_CLIENT_ID,
@@ -14,7 +15,7 @@ const {
 
 // ios: 351905340243-ukitr8ec5mcafkf4l982786e57rmr134.apps.googleusercontent.com
 //web: 351905340243-nqcpk950c1kbhu341k65bdh9ssvrt6fs.apps.googleusercontent.com
-// WebBrowser.maybeCompleteAuthSession();
+ WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
   const [userInfo, setUserInfo] = React.useState(null);
@@ -112,9 +113,9 @@ export default function Login() {
   const handleAppleSignIn = async () => {
     try {
       console.log('🚀 Starting Apple Sign-In flow');
-  
-      let credential;  // declare here for scope
-  
+
+      let credential;
+
       try {
         credential = await AppleAuthentication.signInAsync({
           requestedScopes: [
@@ -126,45 +127,25 @@ export default function Login() {
       } catch (err) {
         console.error('AppleAuthentication.signInAsync failed:', err);
         Alert.alert('Apple Sign-In Error', err.message || 'Unknown error');
-        return; // stop further processing
+        return;
       }
-  
-      if (!credential.identityToken) {
-        console.warn('⚠️ No identity token returned from Apple');
-        throw new Error('Apple Sign-In failed: No identity token returned');
+
+      if (!credential.user) {
+        console.warn('⚠️ Apple credential missing user identifier');
+        throw new Error('Apple Sign-In failed: No user identifier returned');
       }
-  
-      console.log('🔐 Creating Firebase OAuthProvider credential');
-      const provider = new OAuthProvider('apple.com');
-      const firebaseCredential = provider.credential({
-        idToken: credential.identityToken,
-      });
-  
-      console.log('🔑 Signing in to Firebase with Apple credential');
-      const userCredential = await signInWithCredential(auth, firebaseCredential);
-      const firebaseUser = userCredential.user;
-  
-      console.log('👤 Firebase user signed in:', {
-        uid: firebaseUser.uid,
-        displayName: firebaseUser.displayName,
-        email: firebaseUser.email,
-      });
-  
+
       const user = {
-        uid: firebaseUser.uid,
-        name: credential.fullName?.givenName ?? firebaseUser.displayName ?? '',
-        email: credential.email ?? firebaseUser.email ?? '',
+        uid: credential.user,
+        name: credential.fullName?.givenName || '',
+        email: credential.email || '',
         provider: 'apple',
       };
-  
-      console.log('💾 Saving user to Firestore and AsyncStorage:', user);
-      await saveUserToFirestore(user);
+
       await AsyncStorage.setItem('@user', JSON.stringify(user));
-  
       setUserInfo(user);
-  
-      console.log('✅ Apple Sign-In Success:', user);
-  
+
+      console.log('✅ Apple Sign-In (local only) success:', user);
     } catch (e: any) {
       console.error('❌ Apple Sign-In Error:', e);
       if (e.code === 'ERR_CANCELED') {
@@ -175,9 +156,6 @@ export default function Login() {
     }
   };
   
-  
-
-
   return (
       <View style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.container}>

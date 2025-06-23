@@ -12,11 +12,12 @@ export default () => ({
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.login-example.dev",
       googleServicesFile: "./GoogleService-Info.plist",  // 👈 This line is key
       infoPlist: {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      bundleIdentifier: "com.login-example.dev",
+      usesAppleSignIn: true
     },
     android: {
       adaptiveIcon: {
