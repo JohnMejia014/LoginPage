@@ -82,4 +82,3 @@ yarn-error.*
 *.tsbuildinfo
 
 # @end expo-cli
-GoogleService-Info.plist
