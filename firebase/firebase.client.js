@@ -1,9 +1,10 @@
 // firebase.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import Constants from 'expo-constants';
 import { initializeApp } from 'firebase/app';
 import { GoogleAuthProvider, OAuthProvider, createUserWithEmailAndPassword, getReactNativePersistence, initializeAuth, onAuthStateChanged, signInWithCredential, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getFirestore, setDoc } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 const {
   FIREBASE_API_KEY,
   FIREBASE_AUTH_DOMAIN,
@@ -13,6 +14,7 @@ const {
   FIREBASE_IOS_APP_ID,
   FIREBASE_WEB_APP_ID
 } = Constants.expoConfig.extra;
+const API_URL = 'http://192.168.1.113:8000'
 
 
 const firebaseConfig = {
@@ -38,18 +40,22 @@ const saveUserToFirestore = async (user) => {
   try {
     if (!user.uid) throw new Error('User UID is missing');
 
-    const userRef = doc(db, 'users', user.uid);
+    // ✅ Directly call your FastAPI backend to handle user creation
+    const response = await axios.post(`${API_URL}/register_user`, {
+        uid: user.uid,
+        email: user.email || '',
+        name: user.displayName || user.name || '',
+        provider: user.provider || 'email',
+        }
+      );    
+    if (response.data.success) {
+      console.log('✅ User registered in backend (and presumably Firestore)');
+    } else {
+      console.warn('⚠️ Backend registration failed:', response.data.error_message);
+    }
 
-    await setDoc(userRef, {
-      name: user.displayName || user.name || '',
-      email: user.email || '',
-      provider: user.provider || 'email',
-      createdAt: new Date(),
-    });
-
-    console.log('✅ User saved to Firestore');
   } catch (error) {
-    console.error('❌ Error saving user to Firestore:', error);
+    console.error('❌ Error registering user via backend:', error);
   }
 };
 
